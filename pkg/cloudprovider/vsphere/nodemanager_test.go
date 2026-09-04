@@ -2431,3 +2431,28 @@ instance_type: c-8x`,
 		})
 	}
 }
+
+func TestGetInstanceTypeUsesGuestOSLookup(t *testing.T) {
+	const guestID = "sles12_64Guest"
+
+	expectedOS, ok := GuestOSLookup[guestID]
+	if !ok {
+		t.Fatalf("GuestOSLookup does not contain %q", guestID)
+	}
+
+	config := vimtypes.VirtualMachineConfigSummary{
+		GuestId:      guestID,
+		NumCpu:       4,
+		MemorySizeMB: 8192,
+	}
+
+	actual := getInstanceType("owner: platform-team", config)
+	expected := fmt.Sprintf(
+		"vsphere-vm.cpu-4.mem-8gb.os-%s",
+		expectedOS,
+	)
+
+	if actual != expected {
+		t.Errorf("getInstanceType() returned %q, expected %q", actual, expected)
+	}
+}
